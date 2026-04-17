@@ -1,0 +1,22 @@
+# PHP dependencies
+/vendor/
+
+# Python dependencies
+/__pycache__/
+/.venv/
+/.env
+
+# User Uploads (Keep the folders, ignore the files)
+/uploads/face_images/*
+/uploads/voice_notes/*
+/face_api/encodings/*
+!/uploads/face_images/.gitkeep
+!/uploads/voice_notes/.gitkeep
+
+# Sensitive Config
+/config/database.php
+/config/app.php
+
+# Local OS files
+.DS_Store
+Thumbs.db
