@@ -607,7 +607,7 @@ $records = $todayAttendance->fetchAll();
         if (stream) return true;
         try {
             stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } },
+                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
                 audio: false
             });
             video.srcObject = stream;
@@ -627,10 +627,15 @@ $records = $todayAttendance->fetchAll();
 
     function captureFrame() {
         if (!stream || video.videoWidth === 0) throw new Error('Camera is not ready yet.');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
+
+        const maxWidth = 720;
+        const maxHeight = 540;
+        const scale = Math.min(1, Math.min(maxWidth / video.videoWidth, maxHeight / video.videoHeight));
+
+        canvas.width = Math.max(1, Math.floor(video.videoWidth * scale));
+        canvas.height = Math.max(1, Math.floor(video.videoHeight * scale));
         canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-        return canvas.toDataURL('image/jpeg', 0.92);
+        return canvas.toDataURL('image/jpeg', 0.72);
     }
 
     function renderBatchResults(results) {
@@ -695,9 +700,9 @@ $records = $todayAttendance->fetchAll();
         }
         if (!(await startCamera())) return;
         autoScanBtn.textContent = 'Stop Auto Scan';
-        setStatus('Auto scan running — capturing every 3 seconds.', 'success');
+        setStatus('Auto scan running — capturing every 1.5 seconds.', 'success');
         await submitBatchFrame();
-        autoScanTimer = setInterval(submitBatchFrame, 3000);
+        autoScanTimer = setInterval(submitBatchFrame, 1500);
     });
 
     // ════════════════════════════════════════════
@@ -737,10 +742,10 @@ $records = $todayAttendance->fetchAll();
         qrScanner.start(
             { facingMode: "user" }, // Use "user" as default for laptops, works on phones too
             {
-                fps: 10,
+                fps: 16,
                 qrbox: (viewWidth, viewHeight) => {
                     const minEdge = Math.min(viewWidth, viewHeight);
-                    const size = Math.floor(minEdge * 0.7);
+                    const size = Math.floor(minEdge * 0.6);
                     return { width: size, height: size };
                 }
             },

@@ -8,12 +8,12 @@ import numpy as np
 
 def extract_face_encodings(image_bytes: bytes) -> List[np.ndarray]:
     image = face_recognition.load_image_file(io.BytesIO(image_bytes))
-    locations = face_recognition.face_locations(image)
+    locations = face_recognition.face_locations(image, model="hog")
 
     if not locations:
         return []
 
-    return face_recognition.face_encodings(image, locations)
+    return face_recognition.face_encodings(image, known_face_locations=locations, num_jitters=1)
 
 
 def encoding_to_json(encoding: np.ndarray) -> str:
