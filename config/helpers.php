@@ -6,14 +6,31 @@ if (file_exists($autoloader)) {
     require_once $autoloader;
 }
 
-date_default_timezone_set((require __DIR__ . '/app.php')['timezone']);
+function load_app_config(): array
+{
+    $primary = __DIR__ . '/app.php';
+    $fallback = __DIR__ . '/app.example.php';
+
+    if (file_exists($primary)) {
+        return require $primary;
+    }
+
+    if (file_exists($fallback)) {
+        return require $fallback;
+    }
+
+    throw new RuntimeException('No application config file found. Expected config/app.php or config/app.example.php.');
+}
+
+$config = load_app_config();
+date_default_timezone_set($config['timezone'] ?? 'UTC');
 
 function config(?string $key = null, mixed $default = null): mixed
 {
     static $config;
 
     if ($config === null) {
-        $config = require __DIR__ . '/app.php';
+        $config = load_app_config();
     }
 
     if ($key === null) {
