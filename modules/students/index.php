@@ -309,37 +309,48 @@ $formMode = $editStudent ? 'update' : 'create';
             <?php if ($editStudent): ?>
                 <input type="hidden" name="student_id" value="<?= e((string) $editStudent['id']) ?>">
             <?php endif; ?>
-            <label>
-                Student Name
-                <input type="text" name="name" value="<?= e($editStudent['name'] ?? '') ?>" required>
-            </label>
-            <label>
-                Roll Number
-                <input type="text" name="roll_no" value="<?= e($editStudent['roll_no'] ?? '') ?>" required>
-            </label>
-            <label>
-                Class
-                <input type="text" name="class" value="<?= e($editStudent['class_name'] ?? '') ?>" placeholder="BSCS-8A" required>
-            </label>
-            <label>
-                Parent / Guardian Email <span class="muted">(optional)</span>
-                <input type="email" name="parent_email" value="<?= e($editStudent['parent_email'] ?? '') ?>" placeholder="parent@example.com">
-            </label>
-            <label>
-                Parent / Guardian Phone <span class="muted">(optional)</span>
-                <input type="tel" name="parent_phone" value="<?= e($editStudent['parent_phone'] ?? '') ?>" placeholder="+92 300 1234567">
-            </label>
-            <label>
-                Gender
-                <select name="gender" required>
-                    <option value="male" <?= ($editStudent['gender'] ?? '') === 'male' ? 'selected' : '' ?>>Male</option>
-                    <option value="female" <?= ($editStudent['gender'] ?? '') === 'female' ? 'selected' : '' ?>>Female</option>
-                </select>
-            </label>
+            
+            <div class="form-row cols-2">
+                <label>
+                    Student Name
+                    <input type="text" name="name" value="<?= e($editStudent['name'] ?? '') ?>" required>
+                </label>
+                <label>
+                    Roll Number
+                    <input type="text" name="roll_no" value="<?= e($editStudent['roll_no'] ?? '') ?>" required>
+                </label>
+            </div>
+            
+            <div class="form-row cols-2">
+                <label>
+                    Class
+                    <input type="text" name="class" value="<?= e($editStudent['class_name'] ?? '') ?>" placeholder="BSCS-8A" required>
+                </label>
+                <label>
+                    Gender
+                    <select name="gender" required>
+                        <option value="male" <?= ($editStudent['gender'] ?? '') === 'male' ? 'selected' : '' ?>>Male</option>
+                        <option value="female" <?= ($editStudent['gender'] ?? '') === 'female' ? 'selected' : '' ?>>Female</option>
+                    </select>
+                </label>
+            </div>
+            
+            <div class="form-row cols-2">
+                <label>
+                    Parent / Guardian Email <span class="muted">(optional)</span>
+                    <input type="email" name="parent_email" value="<?= e($editStudent['parent_email'] ?? '') ?>" placeholder="parent@example.com">
+                </label>
+                <label>
+                    Parent / Guardian Phone <span class="muted">(optional)</span>
+                    <input type="tel" name="parent_phone" value="<?= e($editStudent['parent_phone'] ?? '') ?>" placeholder="+92 300 1234567">
+                </label>
+            </div>
+            
             <label>
                 Personalized Message <span class="muted">(Text-to-Speech fallback)</span>
                 <input type="text" name="voice_message" value="<?= e($editStudent['voice_message'] ?? '') ?>" placeholder="e.g. Happy Birthday!">
             </label>
+            
             <label>
                 <?= $editStudent ? 'Replace Face Images (optional)' : 'Face Images' ?>
                 <input type="file" name="images[]" accept="image/*" capture="user" multiple <?= $editStudent ? '' : 'required' ?>>
@@ -375,7 +386,7 @@ $formMode = $editStudent ? 'update' : 'create';
         <div style="margin-bottom: 24px;">
             <h3 style="font-size:1rem;">📤 Import Students (CSV)</h3>
             <p class="muted">Upload a CSV file to add students in bulk. Face registration is required later.</p>
-            <form method="post" enctype="multipart/form-data" style="margin-top:12px; border: 1px dashed var(--line); padding: 16px; border-radius: 14px;">
+            <form method="post" enctype="multipart/form-data" class="upload-box">
                 <input type="hidden" name="action" value="import_csv">
                 <label>
                     Select CSV File
@@ -391,7 +402,7 @@ $formMode = $editStudent ? 'update' : 'create';
         <div style="margin-bottom: 24px;">
             <h3 style="font-size:1rem;">🖼️ Bulk Face Upload (ZIP)</h3>
             <p class="muted">Upload a ZIP of photos named as <code>RollNumber.jpg</code> (e.g. 101.jpg) to link faces instantly.</p>
-            <form method="post" enctype="multipart/form-data" style="margin-top:12px; border: 1px dashed var(--line); padding: 16px; border-radius: 14px;">
+            <form method="post" enctype="multipart/form-data" class="upload-box">
                 <input type="hidden" name="action" value="import_faces">
                 <label>
                     Select ZIP File
@@ -406,14 +417,14 @@ $formMode = $editStudent ? 'update' : 'create';
         <h2>QR Code Workflow</h2>
         <p class="muted">QR codes let students mark attendance when face recognition fails (masks, poor lighting, glasses, etc.).</p>
         <h3 style="font-size:.95rem;">How to use:</h3>
-        <ol style="line-height:1.8; color:var(--ink);">
+        <ol class="workflow-list">
             <li><strong>Register</strong> a student → a unique QR code is generated automatically.</li>
             <li>Click the <strong>QR</strong> button next to any student → view, download, or print.</li>
             <li><strong>Print</strong> the QR card and paste it on the student's ID card, notebook, or give it as a separate slip.</li>
             <li>On attendance day, if face scan fails → switch to <strong>QR Code Scanner</strong> tab.</li>
             <li>Student holds their QR card to the webcam → attendance is marked instantly.</li>
         </ol>
-        <h3 style="font-size:.95rem;">Bulk printing:</h3>
+        <h3 style="font-size:.95rem; margin-top: 15px;">Bulk printing:</h3>
         <p class="muted">Click <strong>"🖨 Print All QR Cards"</strong> below the student list to generate a printable sheet with QR cards for every registered student. Cut and distribute to students.</p>
     </section>
 </div>

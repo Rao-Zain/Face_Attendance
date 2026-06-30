@@ -126,10 +126,16 @@ a:hover {
     grid-row: 1;
 }
 
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 35px;
+}
+
 .brand {
     font-size: 1.35rem;
     font-weight: 800;
-    margin-bottom: 35px;
     letter-spacing: -0.03em;
     background: var(--primary-gradient);
     -webkit-background-clip: text;
@@ -137,6 +143,23 @@ a:hover {
     display: flex;
     align-items: center;
     gap: 8px;
+}
+
+.sidebar-close {
+    display: none;
+    background: none;
+    border: none;
+    color: #cbd5e1;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: var(--radius-sm);
+    transition: background var(--transition-fast);
+}
+
+.sidebar-close:hover {
+    background-color: var(--sidebar-hover);
+    color: #ffffff;
 }
 
 .brand::before {
@@ -248,10 +271,16 @@ a:hover {
     gap: 24px;
 }
 .grid.cols-2 {
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
 .grid.cols-3 {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+}
+
+@media (max-width: 480px) {
+    .grid.cols-2, .grid.cols-3 {
+        grid-template-columns: 1fr;
+    }
 }
 
 /* Cards */
@@ -392,6 +421,19 @@ a:hover {
    Form Controls
    ========================================================================== */
 
+.form-row {
+    display: grid;
+    gap: 16px;
+}
+.form-row.cols-2 {
+    grid-template-columns: 1fr 1fr;
+}
+@media (max-width: 640px) {
+    .form-row.cols-2 {
+        grid-template-columns: 1fr;
+    }
+}
+
 form {
     display: grid;
     gap: 16px;
@@ -440,6 +482,27 @@ input[type="file"] {
     cursor: pointer;
     padding: 16px;
     text-align: center;
+}
+
+.upload-box {
+    margin-top: 12px;
+    border: 2px dashed var(--border-color);
+    padding: 20px;
+    border-radius: var(--radius-md);
+    background-color: #fafbfc;
+    transition: border-color var(--transition-fast), background-color var(--transition-fast);
+}
+.upload-box:hover {
+    border-color: var(--primary-light);
+    background-color: #f0fdfa;
+}
+.upload-box label {
+    cursor: pointer;
+}
+.upload-box input[type="file"] {
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    width: 100%;
 }
 
 /* Buttons */
@@ -747,6 +810,10 @@ tr:hover td {
         grid-template-columns: 1fr;
     }
     
+    .sidebar-close {
+        display: block;
+    }
+    
     .sidebar {
         position: fixed;
         top: 0;
@@ -828,6 +895,21 @@ tr:hover td {
 .parent-info {
     font-size: 0.85rem;
     color: var(--text-muted);
+}
+
+.workflow-list {
+    margin-left: 20px;
+    line-height: 1.8;
+    color: var(--text-main);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.workflow-list li {
+    padding-left: 6px;
+}
+.workflow-list li strong {
+    color: var(--primary);
 }
 
 /* QR Modal styles */

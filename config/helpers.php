@@ -239,8 +239,11 @@ function render_layout(string $title, string $content, string $activePage = 'das
         <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
         <aside class="sidebar" id="sidebar">
-            <div class="brand"><?= e(config('app_name')) ?></div>
-            <nav class="nav">
+            <div class="sidebar-header">
+                <div class="brand" style="margin-bottom:0;"><?= e(config('app_name')) ?></div>
+                <button class="sidebar-close" id="sidebarClose" aria-label="Close Menu">✕</button>
+            </div>
+            <nav class="nav" style="margin-top:20px;">
                 <?php foreach (nav_items() as $page => $label): ?>
                     <a class="<?= $activePage === $page ? 'active' : '' ?>" href="index.php?page=<?= e($page) ?>"><?= e($label) ?></a>
                 <?php endforeach; ?>
@@ -278,6 +281,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
         sidebarToggle.addEventListener('click', toggleMenu);
         sidebarOverlay.addEventListener('click', toggleMenu);
+
+        const sidebarClose = document.getElementById('sidebarClose');
+        if (sidebarClose) {
+            sidebarClose.addEventListener('click', toggleMenu);
+        }
         
         // Close sidebar if user clicks a menu link on mobile
         const navLinks = sidebar.querySelectorAll('.nav a');
