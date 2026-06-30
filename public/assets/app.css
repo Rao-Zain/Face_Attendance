@@ -475,6 +475,12 @@ input, select, textarea {
     transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
+input:not([type="checkbox"]):not([type="radio"]):not([type="submit"]):not([type="button"]):not([type="hidden"]),
+select,
+textarea {
+    width: 100%;
+}
+
 input:focus, select:focus, textarea:focus {
     outline: none;
     border-color: var(--primary-light);
