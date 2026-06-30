@@ -316,6 +316,12 @@ function generate_qr_token(): string
 
 function send_notification_email(?string $to, string $subject, string $body): bool
 {
+    static $smtpFailed = false;
+
+    if ($smtpFailed) {
+        return false;
+    }
+
     if ($to === null || $to === '' || !config('smtp_enabled', false)) {
         return false;
     }
@@ -330,6 +336,7 @@ function send_notification_email(?string $to, string $subject, string $body): bo
 
         // SMTP configuration
         $mail->isSMTP();
+        $mail->Timeout     = 3; // Timeout connection attempt after 3 seconds
         $mail->Host       = (string) config('smtp_host', 'smtp.gmail.com');
         $mail->Port       = (int) config('smtp_port', 587);
         $mail->SMTPAuth   = (bool) config('smtp_auth', true);
@@ -353,6 +360,10 @@ function send_notification_email(?string $to, string $subject, string $body): bo
         return true;
     } catch (\PHPMailer\PHPMailer\Exception $e) {
         error_log('[FaceTrack] Email send failed: ' . $e->getMessage());
+        // If it's a connection issue, disable SMTP for the rest of this request
+        if (str_contains(strtolower($e->getMessage()), 'connect') || str_contains(strtolower($e->getMessage()), 'smtp host')) {
+            $smtpFailed = true;
+        }
         return false;
     } catch (Throwable $e) {
         error_log('[FaceTrack] Email send error: ' . $e->getMessage());
@@ -369,6 +380,12 @@ function send_notification_email(?string $to, string $subject, string $body): bo
  */
 function send_notification_sms(?string $phone, string $body): string
 {
+    static $twilioFailed = false;
+
+    if ($twilioFailed) {
+        return '';
+    }
+
     if ($phone === null || $phone === '' || !config('twilio_enabled', false)) {
         return '';
     }
@@ -429,6 +446,7 @@ function send_notification_sms(?string $phone, string $body): string
         return '';
     } catch (Throwable $e) {
         error_log('[FaceTrack] Twilio send failed: ' . $e->getMessage());
+        $twilioFailed = true; // Disable twilio for the rest of this request
         return '';
     }
 }
