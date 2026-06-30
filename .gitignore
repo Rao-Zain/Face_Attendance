@@ -1,5 +1,4 @@
-# PHP dependencies
-/vendor/
+
 
 # Python dependencies
 /__pycache__/
@@ -14,8 +13,8 @@
 !/uploads/voice_notes/.gitkeep
 
 # Sensitive Config
-/config/database.php
-/config/app.php
+
+
 
 # Local OS files
 .DS_Store
