@@ -26,14 +26,14 @@ return [
     'smtp_from_email'=> 'raozn14112001@gmail.com',
 
     // Secret value from Render Environment Variables
-    'smtp_password'  => getenv('SMTP_PASSWORD'),
+    'smtp_password'  => getenv('SMTP_PASSWORD') ?: getenv('smtp_password'),
 
     // ─── WhatsApp / SMS via Twilio ───────────────────────────────────
     'twilio_enabled'        => true,
 
     // Secret values from Render Environment Variables
-    'twilio_account_sid'    => getenv('TWILIO_ACCOUNT_SID'),
-    'twilio_auth_token'     => getenv('TWILIO_AUTH_TOKEN'),
+    'twilio_account_sid'    => getenv('TWILIO_ACCOUNT_SID') ?: getenv('twilio_account_sid'),
+    'twilio_auth_token'     => getenv('TWILIO_AUTH_TOKEN') ?: getenv('twilio_auth_token'),
 
     // Non-secret values
     'twilio_sms_from'       => '',
