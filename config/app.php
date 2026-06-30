@@ -27,6 +27,7 @@ return [
 
     // Secret value from Render Environment Variables
     'smtp_password'  => getenv('SMTP_PASSWORD') ?: getenv('smtp_password'),
+    'resend_api_key' => getenv('RESEND_API_KEY') ?: getenv('resend_api_key'),
 
     // ─── WhatsApp / SMS via Twilio ───────────────────────────────────
     'twilio_enabled'        => true,

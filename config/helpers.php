@@ -318,11 +318,52 @@ function send_notification_email(?string $to, string $subject, string $body): bo
 {
     static $smtpFailed = false;
 
-    if ($smtpFailed) {
+    if ($to === null || $to === '') {
         return false;
     }
 
-    if ($to === null || $to === '' || !config('smtp_enabled', false)) {
+    // Try sending via Resend API first (if API key is present)
+    $resendApiKey = (string) config('resend_api_key', '');
+    if ($resendApiKey !== '') {
+        try {
+            $ch = curl_init('https://api.resend.com/emails');
+            $fromName  = (string) config('smtp_from_name', 'FaceTrack Attendance');
+            $fromEmail = 'onboarding@resend.dev'; // Free Resend accounts must use onboarding@resend.dev
+
+            $payload = json_encode([
+                'from'    => "{$fromName} <{$fromEmail}>",
+                'to'      => [$to],
+                'subject' => $subject,
+                'text'    => $body,
+            ]);
+
+            curl_setopt_array($ch, [
+                CURLOPT_POST           => true,
+                CURLOPT_RETURNTRANSFER => true,
+                CURLOPT_HTTPHEADER     => [
+                    'Authorization: Bearer ' . $resendApiKey,
+                    'Content-Type: application/json',
+                ],
+                CURLOPT_POSTFIELDS     => $payload,
+                CURLOPT_TIMEOUT        => 5,
+            ]);
+
+            $response = curl_exec($ch);
+            $statusCode = curl_getinfo($ch, CURLINFO_RESPONSE_CODE);
+            curl_close($ch);
+
+            if ($statusCode >= 200 && $statusCode < 300) {
+                return true;
+            }
+
+            error_log('[FaceTrack] Resend API failed (status ' . $statusCode . '): ' . $response);
+        } catch (Throwable $e) {
+            error_log('[FaceTrack] Resend API exception: ' . $e->getMessage());
+        }
+    }
+
+    // Fallback to PHPMailer SMTP
+    if ($smtpFailed || !config('smtp_enabled', false)) {
         return false;
     }
 
