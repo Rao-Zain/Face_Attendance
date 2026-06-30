@@ -258,135 +258,8 @@ $todayAttendance->execute(['today' => today()]);
 $records = $todayAttendance->fetchAll();
 ?>
 
-<style>
-    /* ── Tabs ─────────────────────────────────── */
-    .scan-tabs { display: flex; gap: 4px; margin-bottom: 18px; }
-    .scan-tab-btn {
-        flex: 1;
-        padding: 14px 18px;
-        border: 2px solid var(--line);
-        border-radius: 14px;
-        background: var(--card);
-        font-weight: 700;
-        font-size: .95rem;
-        cursor: pointer;
-        transition: all .2s;
-        color: var(--muted);
-        text-align: center;
-    }
-    .scan-tab-btn.active {
-        border-color: var(--accent);
-        background: var(--accent-soft);
-        color: var(--accent);
-    }
-    .scan-tab-btn:hover:not(.active) { border-color: #94a3b8; }
-    .scan-tab-panel { display: none; }
-    .scan-tab-panel.active { display: block; }
 
-    /* ── Camera ───────────────────────────────── */
-    .camera-grid { display: grid; grid-template-columns: minmax(320px, 1.2fr) minmax(260px, .8fr); gap: 18px; align-items: start; }
-    .camera-stage { position: relative; overflow: hidden; border-radius: 18px; background: #0f172a; min-height: 320px; }
-    .camera-stage video { width: 100%; height: 100%; min-height: 320px; object-fit: cover; display: block; }
-    .camera-overlay {
-        position: absolute; inset: 16px;
-        border: 2px dashed rgba(255,255,255,.5);
-        border-radius: 20px; pointer-events: none;
-    }
-    .camera-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 10px; }
-    .camera-status {
-        padding: 14px 16px; border-radius: 14px;
-        background: #eff6ff; color: #1d4ed8;
-        border: 1px solid #bfdbfe; font-weight: 600;
-    }
-    .camera-status.success { background: #dcfce7; border-color: #86efac; color: #166534; }
-    .camera-status.warning { background: #fef3c7; border-color: #fcd34d; color: #92400e; }
-    .camera-status.error { background: #fee2e2; border-color: #fca5a5; color: #b91c1c; }
-    .live-pill {
-        display: inline-flex; align-items: center; gap: 8px;
-        padding: 6px 10px; border-radius: 999px;
-        background: #ecfeff; color: #155e75;
-        font-size: .85rem; font-weight: 700;
-    }
-    .live-pill::before {
-        content: ""; width: 10px; height: 10px;
-        border-radius: 50%; background: #14b8a6;
-        box-shadow: 0 0 0 6px rgba(20, 184, 166, .18);
-    }
 
-    /* ── Batch results ────────────────────────── */
-    .batch-results { margin-top: 14px; }
-    .batch-card {
-        display: flex; align-items: center; gap: 14px;
-        padding: 12px 16px; border-radius: 14px;
-        background: var(--card); border-left: 4px solid #14b8a6;
-        margin-bottom: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.04);
-        animation: batchIn .3s ease;
-    }
-    @keyframes batchIn { from { opacity: 0; transform: translateX(-12px); } to { opacity: 1; transform: none; } }
-    .batch-card.already_marked { border-left-color: #f59e0b; }
-    .batch-card.low_confidence { border-left-color: #ef4444; }
-    .batch-card .bc-name { font-weight: 700; flex: 1; }
-    .batch-card .bc-roll { color: var(--muted); font-size: .9rem; }
-    .batch-card .bc-conf { font-size: .85rem; }
-    .batch-card .bc-badge {
-        padding: 4px 10px; border-radius: 999px;
-        font-size: .8rem; font-weight: 700;
-        background: #dcfce7; color: #166534;
-    }
-    .batch-card.already_marked .bc-badge { background: #fef3c7; color: #92400e; }
-    .batch-card.low_confidence .bc-badge { background: #fee2e2; color: #b91c1c; }
-
-    /* ── QR Scanner ───────────────────────────── */
-    .qr-scanner-wrapper { max-width: 420px; margin: 0 auto; }
-    #qr-reader { border-radius: 14px; overflow: hidden; }
-    #qr-reader video { border-radius: 14px; }
-
-    /* ── Method badges ────────────────────────── */
-    .method-face { background: #dbeafe; color: #1e40af; }
-    .method-qr { background: #fae8ff; color: #86198f; }
-
-    @media (max-width: 900px) { .camera-grid { grid-template-columns: 1fr; } }
-
-    /* 🌟 Welcome Overlay Styling 🌟 */
-    .welcome-overlay {
-        position: fixed; inset: 0; z-index: 9999;
-        background: rgba(15, 23, 42, 0.4);
-        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        display: flex; align-items: center; justify-content: center;
-        opacity: 0; pointer-events: none;
-        transition: opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-    .welcome-overlay.visible { opacity: 1; pointer-events: auto; }
-    
-    .welcome-card {
-        background: var(--card); border-radius: 32px;
-        padding: 48px; width: 90%; max-width: 480px;
-        text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 1);
-        transform: scale(0.8) translateY(20px);
-        transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .welcome-overlay.visible .welcome-card { transform: scale(1) translateY(0); }
-
-    .welcome-avatar-box {
-        width: 140px; height: 140px; border-radius: 50%;
-        margin: 0 auto 24px; display: flex; align-items: center; justify-content: center;
-        font-size: 4rem; background: linear-gradient(135deg, #0d9488, #115e59);
-        color: white; border: 6px solid #f0fdfa;
-        box-shadow: 0 0 30px rgba(13, 148, 136, 0.3);
-    }
-    .welcome-card h1 { font-size: 2.2rem; margin-bottom: 8px; color: var(--ink); }
-    .welcome-card .roll-pill {
-        display: inline-block; padding: 6px 16px; border-radius: 999px;
-        background: #f1f5f9; color: #475569; font-weight: 600; font-size: .95rem;
-    }
-    .success-badge {
-        display: flex; align-items: center; justify-content: center; gap: 8px;
-        margin-top: 32px; color: #059669; font-weight: 700; font-size: 1.2rem;
-    }
-    .success-badge svg { width: 32px; height: 32px; animation: bounce 1s infinite alternate; }
-    
-    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-5px); } }
-</style>
 
 <div class="scan-tabs">
     <button class="scan-tab-btn active" data-tab="faceTab" id="faceTabBtn">🎥 Face Recognition</button>
@@ -456,36 +329,38 @@ $records = $todayAttendance->fetchAll();
         <h2>Today's Attendance</h2>
         <span class="badge"><?= e((string) count($records)) ?> marked</span>
     </div>
-    <table>
-        <thead>
-        <tr>
-            <th>Name</th>
-            <th>Roll No</th>
-            <th>Class</th>
-            <th>Time</th>
-            <th>Status</th>
-            <th>Method</th>
-            <th>Confidence</th>
-        </tr>
-        </thead>
-        <tbody>
-        <?php if ($records === []): ?>
-            <tr><td colspan="7" class="muted">No attendance has been marked today.</td></tr>
-        <?php else: ?>
-            <?php foreach ($records as $record): ?>
-                <tr>
-                    <td><?= e($record['name']) ?></td>
-                    <td><?= e($record['roll_no']) ?></td>
-                    <td><?= e($record['class_name']) ?></td>
-                    <td><?= e($record['attendance_time']) ?></td>
-                    <td><span class="badge"><?= e(ucfirst($record['status'])) ?></span></td>
-                    <td><span class="badge method-<?= e($record['marked_via'] ?? 'face') ?>"><?= e(ucfirst($record['marked_via'] ?? 'face')) ?></span></td>
-                    <td><?= e(number_format((float) $record['confidence_score'] * 100, 2)) ?>%</td>
-                </tr>
-            <?php endforeach; ?>
-        <?php endif; ?>
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+            <tr>
+                <th>Name</th>
+                <th>Roll No</th>
+                <th>Class</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Method</th>
+                <th>Confidence</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php if ($records === []): ?>
+                <tr><td colspan="7" class="muted">No attendance has been marked today.</td></tr>
+            <?php else: ?>
+                <?php foreach ($records as $record): ?>
+                    <tr>
+                        <td><?= e($record['name']) ?></td>
+                        <td><?= e($record['roll_no']) ?></td>
+                        <td><?= e($record['class_name']) ?></td>
+                        <td><?= e($record['attendance_time']) ?></td>
+                        <td><span class="badge"><?= e(ucfirst($record['status'])) ?></span></td>
+                        <td><span class="badge method-<?= e($record['marked_via'] ?? 'face') ?>"><?= e(ucfirst($record['marked_via'] ?? 'face')) ?></span></td>
+                        <td><?= e(number_format((float) $record['confidence_score'] * 100, 2)) ?>%</td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </section>
 <!-- Fullscreen Welcome Overlay -->
 <div id="welcomeOverlay" class="welcome-overlay">

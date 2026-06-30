@@ -197,47 +197,49 @@ $classes = db()->query('SELECT DISTINCT class_name FROM students ORDER BY class_
 
 <section class="card" style="margin-top: 18px;">
     <h2>Filtered Attendance Records</h2>
-    <table>
-        <thead>
-        <tr>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Name</th>
-            <th>Roll No</th>
-            <th>Class</th>
-            <th>Status</th>
-            <th>Method</th>
-            <th>Confidence</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <?php if ($rows === []): ?>
-            <tr><td colspan="9" class="muted">No records match the selected filters.</td></tr>
-        <?php else: ?>
-            <?php foreach ($rows as $row): ?>
-                <tr>
-                    <td><?= e($row['attendance_date']) ?></td>
-                    <td><?= e($row['attendance_time']) ?></td>
-                    <td><?= e($row['name']) ?></td>
-                    <td><?= e($row['roll_no']) ?></td>
-                    <td><?= e($row['class_name']) ?></td>
-                    <td><?= e(ucfirst($row['status'])) ?></td>
-                    <td><span class="badge"><?= e(ucfirst($row['marked_via'] ?? 'face')) ?></span></td>
-                    <td><?= e(number_format((float) $row['confidence_score'] * 100, 2)) ?>%</td>
-                    <td>
-                        <div class="inline-actions">
-                            <a class="ghost-btn" href="index.php?page=reports&edit=<?= e((string) $row['id']) ?>">Edit</a>
-                            <form method="post" onsubmit="return confirm('Delete this attendance record?');">
-                                <input type="hidden" name="action" value="delete_attendance">
-                                <input type="hidden" name="attendance_id" value="<?= e((string) $row['id']) ?>">
-                                <button type="submit" class="danger-btn">Delete</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        <?php endif; ?>
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+            <tr>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Name</th>
+                <th>Roll No</th>
+                <th>Class</th>
+                <th>Status</th>
+                <th>Method</th>
+                <th>Confidence</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php if ($rows === []): ?>
+                <tr><td colspan="9" class="muted">No records match the selected filters.</td></tr>
+            <?php else: ?>
+                <?php foreach ($rows as $row): ?>
+                    <tr>
+                        <td><?= e($row['attendance_date']) ?></td>
+                        <td><?= e($row['attendance_time']) ?></td>
+                        <td><?= e($row['name']) ?></td>
+                        <td><?= e($row['roll_no']) ?></td>
+                        <td><?= e($row['class_name']) ?></td>
+                        <td><?= e(ucfirst($row['status'])) ?></td>
+                        <td><span class="badge"><?= e(ucfirst($row['marked_via'] ?? 'face')) ?></span></td>
+                        <td><?= e(number_format((float) $row['confidence_score'] * 100, 2)) ?>%</td>
+                        <td>
+                            <div class="inline-actions">
+                                <a class="ghost-btn" href="index.php?page=reports&edit=<?= e((string) $row['id']) ?>">Edit</a>
+                                <form method="post" onsubmit="return confirm('Delete this attendance record?');">
+                                    <input type="hidden" name="action" value="delete_attendance">
+                                    <input type="hidden" name="attendance_id" value="<?= e((string) $row['id']) ?>">
+                                    <button type="submit" class="danger-btn">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </section>

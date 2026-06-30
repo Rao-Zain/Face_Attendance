@@ -97,32 +97,8 @@ $recentAttendance = db()->query(
 )->fetchAll();
 ?>
 
-<style>
-    .stat-card-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 16px; margin-bottom: 18px; }
-    .stat-card { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px; box-shadow: 0 10px 30px rgba(15,23,42,.05); }
-    .stat-card .muted { margin-bottom: 2px; }
-    .stat-card .stat { font-size: 2rem; font-weight: 700; margin: 0; }
-    .stat-card .stat-sub { font-size: .85rem; color: var(--muted); }
-    .chart-row { display: grid; grid-template-columns: 1.5fr 1fr; gap: 16px; margin-bottom: 18px; }
-    .chart-box { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 20px; box-shadow: 0 10px 30px rgba(15,23,42,.05); }
-    .chart-box h2 { margin-top: 0; font-size: 1.1rem; }
-    .chart-canvas-wrap { position: relative; width: 100%; max-height: 320px; }
-    .student-row { display: grid; grid-template-columns: 2fr 1fr 1fr 3fr 80px; gap: 10px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--line); font-size: .92rem; }
-    .student-row:last-child { border-bottom: none; }
-    .student-row strong { font-size: .95rem; }
-    .pct-meter { height: 10px; border-radius: 999px; background: #e5e7eb; overflow: hidden; }
-    .pct-meter > span { display: block; height: 100%; border-radius: 999px; transition: width .6s ease; }
-    .pct-green { background: linear-gradient(90deg, #14b8a6, #22c55e); }
-    .pct-yellow { background: linear-gradient(90deg, #f59e0b, #eab308); }
-    .pct-red { background: linear-gradient(90deg, #ef4444, #f97316); }
-    .rate-badge { padding: 4px 10px; border-radius: 999px; font-size: .82rem; font-weight: 700; }
-    .rate-good { background: #dcfce7; color: #166534; }
-    .rate-warn { background: #fef3c7; color: #92400e; }
-    .rate-danger { background: #fee2e2; color: #b91c1c; }
-    .method-face { background: #dbeafe; color: #1e40af; }
-    .method-qr { background: #fae8ff; color: #86198f; }
-    @media (max-width: 900px) { .chart-row { grid-template-columns: 1fr; } .student-row { grid-template-columns: 1fr 1fr; } }
-</style>
+
+
 
 <!-- ─── Stat cards ──────────────────────────────────────────── -->
 <div class="stat-card-row">
@@ -193,7 +169,7 @@ $recentAttendance = db()->query(
     <?php if ($perStudent === []): ?>
         <p class="muted">No students found.</p>
     <?php else: ?>
-        <div class="student-row" style="font-weight:700; border-bottom:2px solid var(--line);">
+        <div class="student-row student-row-header" style="font-weight:700;">
             <span>Student</span>
             <span>Class</span>
             <span>Present</span>
@@ -223,36 +199,38 @@ $recentAttendance = db()->query(
 <!-- ─── Recent attendance ──────────────────────────────────── -->
 <section class="chart-box" style="margin-top:18px;">
     <h2>Recent Attendance</h2>
-    <table>
-        <thead>
-        <tr>
-            <th>Student</th>
-            <th>Roll No</th>
-            <th>Date</th>
-            <th>Time</th>
-            <th>Status</th>
-            <th>Method</th>
-            <th>Confidence</th>
-        </tr>
-        </thead>
-        <tbody>
-        <?php if ($recentAttendance === []): ?>
-            <tr><td colspan="7" class="muted">No attendance records yet.</td></tr>
-        <?php else: ?>
-            <?php foreach ($recentAttendance as $row): ?>
-                <tr>
-                    <td><?= e($row['name']) ?></td>
-                    <td><?= e($row['roll_no']) ?></td>
-                    <td><?= e($row['attendance_date']) ?></td>
-                    <td><?= e($row['attendance_time']) ?></td>
-                    <td><span class="badge"><?= e(ucfirst($row['status'])) ?></span></td>
-                    <td><span class="badge method-<?= e($row['marked_via'] ?? 'face') ?>"><?= e(ucfirst($row['marked_via'] ?? 'face')) ?></span></td>
-                    <td><?= e(number_format((float) $row['confidence_score'] * 100, 2)) ?>%</td>
-                </tr>
-            <?php endforeach; ?>
-        <?php endif; ?>
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+            <tr>
+                <th>Student</th>
+                <th>Roll No</th>
+                <th>Date</th>
+                <th>Time</th>
+                <th>Status</th>
+                <th>Method</th>
+                <th>Confidence</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php if ($recentAttendance === []): ?>
+                <tr><td colspan="7" class="muted">No attendance records yet.</td></tr>
+            <?php else: ?>
+                <?php foreach ($recentAttendance as $row): ?>
+                    <tr>
+                        <td><?= e($row['name']) ?></td>
+                        <td><?= e($row['roll_no']) ?></td>
+                        <td><?= e($row['attendance_date']) ?></td>
+                        <td><?= e($row['attendance_time']) ?></td>
+                        <td><span class="badge"><?= e(ucfirst($row['status'])) ?></span></td>
+                        <td><span class="badge method-<?= e($row['marked_via'] ?? 'face') ?>"><?= e(ucfirst($row['marked_via'] ?? 'face')) ?></span></td>
+                        <td><?= e(number_format((float) $row['confidence_score'] * 100, 2)) ?>%</td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </section>
 
 <!-- ─── Chart.js ───────────────────────────────────────────── -->

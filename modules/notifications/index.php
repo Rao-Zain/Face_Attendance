@@ -281,28 +281,6 @@ $notifications = db()->query(
 )->fetchAll();
 ?>
 
-<style>
-    .notif-actions { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; }
-    .notif-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 14px; margin-bottom: 18px; }
-    .notif-stat { background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 16px; text-align: center; }
-    .notif-stat .stat { font-size: 1.6rem; font-weight: 700; }
-    .notif-stat .muted { font-size: .85rem; }
-    .type-absent { background: #fee2e2; color: #b91c1c; }
-    .type-late { background: #fef3c7; color: #92400e; }
-    .type-low_attendance { background: #fae8ff; color: #86198f; }
-    .via-email { background: #dcfce7; color: #166534; }
-    .via-sms { background: #e0f2fe; color: #075985; }
-    .via-whatsapp { background: #d1fae5; color: #065f46; }
-    .via-system { background: #f3f4f6; color: #6b7280; }
-    .notif-msg { max-width: 400px; font-size: .88rem; line-height: 1.4; }
-    .channel-status { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 999px; font-size: .85rem; font-weight: 600; }
-    .channel-on  { background: #dcfce7; color: #166534; }
-    .channel-off { background: #fee2e2; color: #b91c1c; }
-    .test-form { display: flex; flex-wrap: wrap; gap: 10px; align-items: end; margin-top: 14px; }
-    .test-form label { font-size: .88rem; }
-    .test-form input { min-width: 180px; }
-    .test-form button { white-space: nowrap; }
-</style>
 
 <!-- ── Channel Status + Generate Alerts ──────────────────────────── -->
 
@@ -406,46 +384,48 @@ $notifications = db()->query(
 
 <section class="card" style="margin-top: 18px;">
     <h2>Notification History</h2>
-    <table>
-        <thead>
-        <tr>
-            <th>Date / Time</th>
-            <th>Type</th>
-            <th>Student</th>
-            <th>Class</th>
-            <th>Message</th>
-            <th>Recipient</th>
-            <th>Sent Via</th>
-        </tr>
-        </thead>
-        <tbody>
-        <?php if ($notifications === []): ?>
-            <tr><td colspan="7" class="muted">No notifications have been generated yet. Click "Generate Today's Alerts" above to start.</td></tr>
-        <?php else: ?>
-            <?php foreach ($notifications as $n): ?>
-                <tr>
-                    <td style="white-space:nowrap;"><?= e($n['created_at']) ?></td>
-                    <td>
-                        <span class="badge type-<?= e($n['type']) ?>"><?= e(ucfirst(str_replace('_', ' ', $n['type']))) ?></span>
-                    </td>
-                    <td>
-                        <strong><?= e($n['name']) ?></strong><br>
-                        <span class="muted" style="font-size:.8rem;"><?= e($n['roll_no']) ?></span>
-                    </td>
-                    <td><?= e($n['class_name']) ?></td>
-                    <td class="notif-msg"><?= e($n['message']) ?></td>
-                    <td style="font-size:.85rem;"><?= $n['recipient_email'] ? e($n['recipient_email']) : '<span class="muted">—</span>' ?></td>
-                    <td>
-                        <?php
-                        $viaParts = explode('+', $n['sent_via']);
-                        foreach ($viaParts as $part):
-                        ?>
-                            <span class="badge via-<?= e(trim($part)) ?>"><?= e(ucfirst(trim($part))) ?></span>
-                        <?php endforeach; ?>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        <?php endif; ?>
-        </tbody>
-    </table>
+    <div class="table-responsive">
+        <table>
+            <thead>
+            <tr>
+                <th>Date / Time</th>
+                <th>Type</th>
+                <th>Student</th>
+                <th>Class</th>
+                <th>Message</th>
+                <th>Recipient</th>
+                <th>Sent Via</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php if ($notifications === []): ?>
+                <tr><td colspan="7" class="muted">No notifications have been generated yet. Click "Generate Today's Alerts" above to start.</td></tr>
+            <?php else: ?>
+                <?php foreach ($notifications as $n): ?>
+                    <tr>
+                        <td style="white-space:nowrap;"><?= e($n['created_at']) ?></td>
+                        <td>
+                            <span class="badge type-<?= e($n['type']) ?>"><?= e(ucfirst(str_replace('_', ' ', $n['type']))) ?></span>
+                        </td>
+                        <td>
+                            <strong><?= e($n['name']) ?></strong><br>
+                            <span class="muted" style="font-size:.8rem;"><?= e($n['roll_no']) ?></span>
+                        </td>
+                        <td><?= e($n['class_name']) ?></td>
+                        <td class="notif-msg"><?= e($n['message']) ?></td>
+                        <td style="font-size:.85rem;"><?= $n['recipient_email'] ? e($n['recipient_email']) : '<span class="muted">—</span>' ?></td>
+                        <td>
+                            <?php
+                            $viaParts = explode('+', $n['sent_via']);
+                            foreach ($viaParts as $part):
+                            ?>
+                                <span class="badge via-<?= e(trim($part)) ?>"><?= e(ucfirst(trim($part))) ?></span>
+                            <?php endforeach; ?>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </section>

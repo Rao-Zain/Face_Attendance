@@ -213,52 +213,12 @@ function render_layout(string $title, string $content, string $activePage = 'das
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title><?= e($title) ?> | <?= e(config('app_name')) ?></title>
-    <style>
-        :root { --ink:#1f2937; --muted:#6b7280; --bg:#f4f7fb; --card:#fff; --line:#dbe4f0; --accent:#0f766e; --accent-soft:#d9f3f1; --danger:#b91c1c; --danger-soft:#fee2e2; --warning:#92400e; --warning-soft:#fef3c7; }
-        * { box-sizing:border-box; }
-        body { margin:0; font-family:"Segoe UI",Tahoma,sans-serif; background:linear-gradient(180deg,#edf5ff 0%,var(--bg) 30%,#f8fafc 100%); color:var(--ink); }
-        .shell { display:grid; grid-template-columns:240px 1fr; min-height:100vh; }
-        .sidebar { background:#0f172a; color:#e2e8f0; padding:24px 18px; }
-        .brand { font-size:1.25rem; font-weight:700; margin-bottom:24px; }
-        .nav a { display:block; color:#cbd5e1; text-decoration:none; padding:10px 12px; border-radius:12px; margin-bottom:8px; }
-        .nav a.active, .nav a:hover { background:rgba(148,163,184,.18); color:#fff; }
-        .content { padding:28px; }
-        .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; }
-        .grid { display:grid; gap:16px; }
-        .grid.cols-2 { grid-template-columns:repeat(auto-fit,minmax(280px,1fr)); }
-        .grid.cols-3 { grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); }
-        .card { background:var(--card); border:1px solid var(--line); border-radius:18px; padding:20px; box-shadow:0 10px 30px rgba(15,23,42,.05); }
-        .card h2, .card h3 { margin-top:0; }
-        .muted { color:var(--muted); }
-        .stat { font-size:2rem; font-weight:700; margin:4px 0 0; }
-        table { width:100%; border-collapse:collapse; }
-        th, td { text-align:left; padding:12px 10px; border-bottom:1px solid var(--line); vertical-align:top; }
-        form { display:grid; gap:14px; }
-        label { display:grid; gap:6px; font-weight:600; }
-        input, select, button { border-radius:12px; border:1px solid #cbd5e1; padding:10px 12px; font:inherit; }
-        button { background:var(--accent); color:#fff; border:none; cursor:pointer; font-weight:600; }
-        .secondary-btn { background:#e2e8f0; color:#0f172a; }
-        .danger-btn { background:#b91c1c; color:#fff; }
-        .ghost-btn { background:#fff; color:#0f172a; border:1px solid #cbd5e1; }
-        .inline-actions { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-        .inline-actions form { display:inline; gap:0; }
-        .inline-actions a, .inline-actions button { text-decoration:none; padding:8px 12px; border-radius:10px; font-size:.92rem; }
-        .flash { padding:12px 14px; border-radius:14px; margin-bottom:12px; border:1px solid transparent; }
-        .flash.success { background:var(--accent-soft); border-color:#99f6e4; }
-        .flash.error { background:var(--danger-soft); border-color:#fca5a5; color:var(--danger); }
-        .flash.warning { background:var(--warning-soft); border-color:#fde68a; color:var(--warning); }
-        .badge { display:inline-flex; padding:4px 10px; border-radius:999px; background:#e0f2fe; color:#075985; font-size:.85rem; font-weight:600; }
-        .meter { height:10px; border-radius:999px; background:#e5e7eb; overflow:hidden; }
-        .meter > span { display:block; height:100%; background:linear-gradient(90deg,#14b8a6,#0ea5e9); }
-        .login-shell { min-height:100vh; display:grid; place-items:center; padding:24px; }
-        .login-card { width:min(460px,100%); }
-        @media (max-width:860px) { .shell { grid-template-columns:1fr; } .sidebar { padding-bottom:8px; } .content { padding:20px; } }
-    </style>
+    <link rel="stylesheet" href="public/assets/app.css">
 </head>
 <body>
 <?php if ($user === null): ?>
     <div class="login-shell">
-        <div class="card login-card">
+        <div class="login-card">
             <h1><?= e(config('app_name')) ?></h1>
             <?php foreach ($flashes as $flash): ?>
                 <div class="flash <?= e($flash['type']) ?>"><?= e($flash['message']) ?></div>
@@ -268,18 +228,29 @@ function render_layout(string $title, string $content, string $activePage = 'das
     </div>
 <?php else: ?>
     <div class="shell">
-        <aside class="sidebar">
+        <!-- Mobile Header Bar -->
+        <header class="mobile-header-bar">
+            <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle Menu">☰</button>
+            <div class="brand" style="margin-bottom:0; font-size:1.15rem;"><?= e(config('app_name')) ?></div>
+            <div style="width: 32px;"></div> <!-- For balancing layout -->
+        </header>
+
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <aside class="sidebar" id="sidebar">
             <div class="brand"><?= e(config('app_name')) ?></div>
             <nav class="nav">
                 <?php foreach (nav_items() as $page => $label): ?>
                     <a class="<?= $activePage === $page ? 'active' : '' ?>" href="index.php?page=<?= e($page) ?>"><?= e($label) ?></a>
                 <?php endforeach; ?>
-                <a href="index.php?page=logout">Logout</a>
+                <a href="index.php?page=logout" style="margin-top:20px; border-top:1px solid rgba(255,255,255,0.08); padding-top:15px;">Logout</a>
             </nav>
         </aside>
+        
         <main class="content">
             <div class="topbar">
-                <div>
+                <div class="topbar-meta">
                     <h1 style="margin:0;"><?= e($title) ?></h1>
                     <div class="muted">Signed in as <?= e($user['email']) ?> (<?= e($user['role']) ?>)</div>
                 </div>
@@ -292,6 +263,34 @@ function render_layout(string $title, string $content, string $activePage = 'das
         </main>
     </div>
 <?php endif; ?>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const sidebarOverlay = document.getElementById('sidebarOverlay');
+    const sidebar = document.getElementById('sidebar');
+
+    if (sidebarToggle && sidebar && sidebarOverlay) {
+        const toggleMenu = () => {
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+        };
+
+        sidebarToggle.addEventListener('click', toggleMenu);
+        sidebarOverlay.addEventListener('click', toggleMenu);
+        
+        // Close sidebar if user clicks a menu link on mobile
+        const navLinks = sidebar.querySelectorAll('.nav a');
+        navLinks.forEach(link => {
+            link.addEventListener('click', () => {
+                if (sidebar.classList.contains('active')) {
+                    toggleMenu();
+                }
+            });
+        });
+    }
+});
+</script>
 </body>
 </html>
 <?php

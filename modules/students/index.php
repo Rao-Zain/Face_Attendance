@@ -293,106 +293,8 @@ $students = db()->query(
 
 $formMode = $editStudent ? 'update' : 'create';
 ?>
-<style>
-    .parent-info { font-size: .85rem; color: var(--muted); }
 
-    /* ── QR Modal ──────────────────────────────── */
-    .qr-modal-overlay {
-        display: none; position: fixed; inset: 0;
-        background: rgba(15, 23, 42, .6);
-        backdrop-filter: blur(6px);
-        z-index: 1000; place-items: center;
-    }
-    .qr-modal-overlay.visible { display: grid; }
-    .qr-modal {
-        background: #fff; border-radius: 22px; padding: 0;
-        box-shadow: 0 25px 70px rgba(0,0,0,.25);
-        max-width: 400px; width: 92%;
-        animation: qrSlideIn .3s ease; overflow: hidden;
-    }
-    @keyframes qrSlideIn { from { opacity: 0; transform: translateY(24px) scale(.95); } to { opacity: 1; transform: none; } }
 
-    /* ── QR ID Card (inside modal + print) ───── */
-    .qr-card {
-        background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
-        color: #fff; padding: 28px 24px 20px; text-align: center;
-    }
-    .qr-card .qr-brand { font-size: .75rem; text-transform: uppercase; letter-spacing: 2px; opacity: .7; margin-bottom: 14px; }
-    .qr-card .qr-name { font-size: 1.25rem; font-weight: 700; margin: 0; }
-    .qr-card .qr-roll { font-size: .9rem; opacity: .85; margin: 2px 0 4px; }
-    .qr-card .qr-class { font-size: .8rem; opacity: .7; }
-    .qr-code-box {
-        background: #fff; border-radius: 16px; padding: 16px;
-        display: inline-block; margin: 16px 0 10px;
-        box-shadow: 0 4px 16px rgba(0,0,0,.15);
-    }
-    .qr-card .qr-hint { font-size: .7rem; opacity: .6; }
-    .qr-modal-actions {
-        padding: 16px 24px 20px;
-        display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px;
-    }
-    .qr-modal-actions button {
-        padding: 10px 8px; font-size: .85rem; border-radius: 10px;
-    }
-
-    /* ── Edit page QR ─────────────────────────── */
-    .edit-qr-card {
-        background: linear-gradient(135deg, #0f766e 0%, #115e59 100%);
-        color: #fff; border-radius: 18px; padding: 24px 20px;
-        text-align: center; margin-top: 8px;
-    }
-    .edit-qr-card .qr-code-box { margin: 12px 0 8px; }
-
-    /* ── Print All Cards Grid ─────────────────── */
-    .print-cards-bar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
-    .qr-cards-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-        gap: 18px; margin-top: 18px;
-    }
-    .qr-card-item {
-        position: relative;
-        color: #fff; border-radius: 18px; padding: 22px 18px;
-        text-align: center; overflow: hidden;
-        background: #0f172a; /* Fallback */
-    }
-    .qr-card-item .card-bg {
-        position: absolute; inset: 0;
-        background-size: cover; background-position: center;
-        opacity: 0.4; filter: blur(2px); z-index: 0;
-    }
-    .qr-card-item > * { position: relative; z-index: 1; }
-    .qr-card-item .qr-brand { font-size: .65rem; text-transform: uppercase; letter-spacing: 2px; opacity: .7; margin-bottom: 10px; }
-    .qr-card-item .qr-name { font-size: 1.05rem; font-weight: 700; margin: 0; }
-    .qr-card-item .qr-roll { font-size: .82rem; opacity: .85; margin: 2px 0; }
-    .qr-card-item .qr-class { font-size: .75rem; opacity: .7; }
-    .qr-card-item .qr-code-box { margin: 12px 0 6px; padding: 12px; }
-    .qr-card-item .qr-hint { font-size: .65rem; opacity: .55; }
-
-    /* ── Print-specific styles ────────────────── */
-    @media print {
-        body * { visibility: hidden !important; }
-        #printCardsSection, #printCardsSection * { visibility: visible !important; }
-        #printCardsSection {
-            position: fixed; inset: 0; z-index: 99999;
-            background: #fff !important; overflow: auto;
-            padding: 10mm;
-        }
-        .qr-cards-grid {
-            grid-template-columns: repeat(3, 1fr) !important;
-            gap: 10mm !important;
-        }
-        .qr-card-item {
-            break-inside: avoid;
-            border-radius: 8px !important;
-            padding: 12px 10px !important;
-            -webkit-print-color-adjust: exact !important;
-            print-color-adjust: exact !important;
-        }
-        .print-cards-bar, .shell, .sidebar, .topbar, .flash,
-        .card:not(#printCardsSection), table, .grid.cols-2,
-        section:not(#printCardsSection) { display: none !important; }
-    }
-</style>
 
 <div class="grid cols-2">
     <section class="card">
@@ -527,57 +429,59 @@ $formMode = $editStudent ? 'update' : 'create';
             <a class="ghost-btn" href="index.php?page=students">Add Student</a>
         </div>
     </div>
-    <table>
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Roll No</th>
-            <th>Class</th>
-            <th>Parent Email</th>
-            <th>Face Status</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody>
-        <?php if ($students === []): ?>
-            <tr><td colspan="7" class="muted">No students registered yet.</td></tr>
-        <?php else: ?>
-            <?php foreach ($students as $student): ?>
-                <tr>
-                    <td><?= e((string) $student['id']) ?></td>
-                    <td><?= e($student['name']) ?></td>
-                    <td><?= e($student['roll_no']) ?></td>
-                    <td><?= e($student['class_name']) ?></td>
-                    <td class="parent-info"><?= $student['parent_email'] ? e($student['parent_email']) : '<span class="muted">—</span>' ?></td>
-                    <td>
-                        <?php if ($student['encoding_count'] > 0): ?>
-                            <span class="badge success" style="font-size:.75rem;">✅ Face Registered</span>
-                        <?php else: ?>
-                            <span class="badge warning" style="font-size:.75rem;">❌ No Face Data</span>
-                        <?php endif; ?>
-                    </td>
-                    <td>
-                        <div class="inline-actions">
-                            <a class="ghost-btn" href="index.php?page=students&edit=<?= e((string) $student['id']) ?>">Edit</a>
-                            <?php if (!empty($student['qr_token'])): ?>
-                                <button type="button" class="secondary-btn"
-                                        onclick="showQR('<?= e($student['name']) ?>', '<?= e($student['roll_no']) ?>', '<?= e($student['class_name']) ?>', '<?= e($student['qr_token']) ?>')">
-                                    QR
-                                </button>
+    <div class="table-responsive">
+        <table>
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Roll No</th>
+                <th>Class</th>
+                <th>Parent Email</th>
+                <th>Face Status</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <?php if ($students === []): ?>
+                <tr><td colspan="7" class="muted">No students registered yet.</td></tr>
+            <?php else: ?>
+                <?php foreach ($students as $student): ?>
+                    <tr>
+                        <td><?= e((string) $student['id']) ?></td>
+                        <td><?= e($student['name']) ?></td>
+                        <td><?= e($student['roll_no']) ?></td>
+                        <td><?= e($student['class_name']) ?></td>
+                        <td class="parent-info"><?= $student['parent_email'] ? e($student['parent_email']) : '<span class="muted">—</span>' ?></td>
+                        <td>
+                            <?php if ($student['encoding_count'] > 0): ?>
+                                <span class="badge success" style="font-size:.75rem;">✅ Face Registered</span>
+                            <?php else: ?>
+                                <span class="badge warning" style="font-size:.75rem;">❌ No Face Data</span>
                             <?php endif; ?>
-                            <form method="post" onsubmit="return confirm('Delete this student and all linked records?');">
-                                <input type="hidden" name="action" value="delete">
-                                <input type="hidden" name="student_id" value="<?= e((string) $student['id']) ?>">
-                                <button type="submit" class="danger-btn">Delete</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-            <?php endforeach; ?>
-        <?php endif; ?>
-        </tbody>
-    </table>
+                        </td>
+                        <td>
+                            <div class="inline-actions">
+                                <a class="ghost-btn" href="index.php?page=students&edit=<?= e((string) $student['id']) ?>">Edit</a>
+                                <?php if (!empty($student['qr_token'])): ?>
+                                    <button type="button" class="secondary-btn"
+                                            onclick="showQR('<?= e($student['name']) ?>', '<?= e($student['roll_no']) ?>', '<?= e($student['class_name']) ?>', '<?= e($student['qr_token']) ?>')">
+                                        QR
+                                    </button>
+                                <?php endif; ?>
+                                <form method="post" onsubmit="return confirm('Delete this student and all linked records?');">
+                                    <input type="hidden" name="action" value="delete">
+                                    <input type="hidden" name="student_id" value="<?= e((string) $student['id']) ?>">
+                                    <button type="submit" class="danger-btn">Delete</button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                <?php endforeach; ?>
+            <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
 </section>
 
 <!-- ══════════════════════════════════════════════════
