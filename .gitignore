@@ -13,8 +13,8 @@
 !/uploads/voice_notes/.gitkeep
 
 # Sensitive Config
-
-
+config/app.php
+config/database.php
 
 # Local OS files
 .DS_Store
