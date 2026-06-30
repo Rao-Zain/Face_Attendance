@@ -63,12 +63,18 @@
     padding: 0;
 }
 
+html {
+    overflow-x: hidden;
+    width: 100%;
+}
+
 body {
     font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-main);
     color: var(--text-main);
     min-height: 100vh;
     overflow-x: hidden;
+    width: 100%;
     line-height: 1.5;
     -webkit-font-smoothing: antialiased;
 }
@@ -106,6 +112,8 @@ a:hover {
     grid-template-columns: 260px 1fr;
     min-height: 100vh;
     position: relative;
+    max-width: 100%;
+    overflow-x: hidden;
 }
 
 .mobile-header-bar {
@@ -233,7 +241,7 @@ a:hover {
 /* Main Content Area */
 .content {
     padding: 40px;
-    max-width: 1600px;
+    max-width: 100%;
     width: 100%;
     margin: 0 auto;
     display: flex;
@@ -241,6 +249,7 @@ a:hover {
     gap: 24px;
     grid-column: 2;
     grid-row: 1;
+    min-width: 0;
 }
 
 /* Top Navigation Bar */
@@ -270,6 +279,9 @@ a:hover {
     display: grid;
     gap: 24px;
 }
+.grid > * {
+    min-width: 0;
+}
 .grid.cols-2 {
     grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
@@ -292,6 +304,8 @@ a:hover {
     box-shadow: var(--shadow-lg);
     position: relative;
     transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    min-width: 0;
+    max-width: 100%;
 }
 
 .card:hover {
@@ -316,6 +330,8 @@ a:hover {
     gap: 8px;
     position: relative;
     transition: transform var(--transition-normal), box-shadow var(--transition-normal);
+    min-width: 0;
+    max-width: 100%;
 }
 
 .stat-card:hover {
@@ -714,6 +730,14 @@ tr:hover td {
     box-shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.1);
     background-color: #ffffff;
     z-index: 10;
+    min-width: 0;
+    max-width: 100%;
+}
+
+@media (max-width: 480px) {
+    .login-card {
+        padding: 24px 16px;
+    }
 }
 
 .login-card h1 {
