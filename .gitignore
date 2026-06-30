@@ -19,3 +19,7 @@ config/database.php
 # Local OS files
 .DS_Store
 Thumbs.db
+
+# Composer dependencies
+/vendor/
+

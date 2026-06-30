@@ -1,0 +1,10 @@
+vendor/
+.git/
+.gitignore
+README.md
+dockerfile
+uploads/face_images/*
+uploads/voice_notes/*
+face_api/encodings/*
+!/uploads/face_images/.gitkeep
+!/uploads/voice_notes/.gitkeep

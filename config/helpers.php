@@ -310,16 +310,16 @@ function send_notification_email(?string $to, string $subject, string $body): bo
 
         // SMTP configuration
         $mail->isSMTP();
-        $mail->Host       = config('smtp_host', 'smtp.gmail.com');
+        $mail->Host       = (string) config('smtp_host', 'smtp.gmail.com');
         $mail->Port       = (int) config('smtp_port', 587);
         $mail->SMTPAuth   = (bool) config('smtp_auth', true);
-        $mail->Username   = config('smtp_username', '');
-        $mail->Password   = config('smtp_password', '');
-        $mail->SMTPSecure = config('smtp_secure', 'tls');
+        $mail->Username   = (string) config('smtp_username', '');
+        $mail->Password   = (string) config('smtp_password', '');
+        $mail->SMTPSecure = (string) config('smtp_secure', 'tls');
 
         // Sender & recipient
-        $fromEmail = config('smtp_from_email', config('smtp_username', ''));
-        $fromName  = config('smtp_from_name', 'FaceTrack Attendance');
+        $fromEmail = (string) config('smtp_from_email', config('smtp_username', ''));
+        $fromName  = (string) config('smtp_from_name', 'FaceTrack Attendance');
         $mail->setFrom($fromEmail, $fromName);
         $mail->addAddress($to);
 
@@ -358,8 +358,8 @@ function send_notification_sms(?string $phone, string $body): string
         return '';
     }
 
-    $sid   = config('twilio_account_sid', '');
-    $token = config('twilio_auth_token', '');
+    $sid   = (string) config('twilio_account_sid', '');
+    $token = (string) config('twilio_auth_token', '');
 
     if ($sid === '' || $token === '') {
         error_log('[FaceTrack] Twilio credentials not configured.');
