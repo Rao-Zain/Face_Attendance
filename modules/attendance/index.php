@@ -38,7 +38,13 @@ function attendance_resolve_image_path(): array
         throw new RuntimeException('Webcam image could not be decoded.');
     }
 
-    $tempPath = tempnam(sys_get_temp_dir(), 'attendance_');
+    $tempDir = dirname(__DIR__) . '/uploads/attendance_tmp';
+
+    if (!is_dir($tempDir) && !mkdir($tempDir, 0777, true) && !is_dir($tempDir)) {
+        throw new RuntimeException('Unable to create a temporary folder for webcam images.');
+    }
+
+    $tempPath = tempnam($tempDir, 'attendance_');
 
     if ($tempPath === false || file_put_contents($tempPath, $binary) === false) {
         throw new RuntimeException('Unable to prepare webcam image for recognition.');

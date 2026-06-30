@@ -1,22 +1,28 @@
-FROM python:3.11-slim
+FROM python:3.10-slim
 
+# Install system dependencies needed by dlib and OpenCV
 RUN apt-get update && apt-get install -y \
-    build-essential \
     cmake \
+    build-essential \
     libopenblas-dev \
     liblapack-dev \
     libx11-dev \
-    libgtk-3-dev \
+    libboost-python-dev \
+    libboost-thread-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Set working directory
 WORKDIR /app
 
+# Copy and install Python dependencies
 COPY requirements.txt .
-
 RUN pip install --no-cache-dir -r requirements.txt
 
+# Copy all app files
 COPY . .
 
-EXPOSE 10000
+# Expose port 7860 (Hugging Face requires this exact port)
+EXPOSE 7860
 
-CMD ["gunicorn", "--bind", "0.0.0.0:10000", "app:app"]
+# Start the app
+CMD ["gunicorn", "--bind", "0.0.0.0:7860", "--timeout", "120", "app:app"]

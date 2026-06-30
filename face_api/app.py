@@ -1,22 +1,30 @@
 import os
 
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import mysql.connector
 
 from face_utils import best_face_match, encoding_to_json, extract_face_encodings, json_to_encoding
 
 app = Flask(__name__)
+CORS(app)
 
 FACE_MATCH_THRESHOLD = float(os.getenv("FACE_MATCH_THRESHOLD", "0.55"))
 
 
 def db_connection():
+    host = os.getenv("DB_HOST", "sql205.infinityfree.com")
+    user = os.getenv("DB_USER", "if0_42299174")
+    password = os.getenv("DB_PASSWORD", "JGcXHAoq1ANypi")
+    database = os.getenv("DB_NAME", "if0_42299174_Face_Attendance")
+    port = int(os.getenv("DB_PORT", "3306"))
+
     return mysql.connector.connect(
-        host=os.getenv("DB_HOST"),
-        port=int(os.getenv("DB_PORT", "3306")),
-        user=os.getenv("DB_USER"),
-        password=os.getenv("DB_PASSWORD"),
-        database=os.getenv("DB_NAME"),
+        host=host,
+        port=port,
+        user=user,
+        password=password,
+        database=database,
     )
 
 
@@ -58,7 +66,11 @@ def register_face():
 
         saved_encodings.extend(encodings)
 
-    connection = db_connection()
+    try:
+        connection = db_connection()
+    except Exception as exc:
+        return jsonify({"error": "Database connection failed.", "details": str(exc)}), 500
+
     cursor = connection.cursor()
 
     try:
@@ -102,7 +114,11 @@ def recognize_face():
 
     candidate = candidate_encodings[0]
 
-    connection = db_connection()
+    try:
+        connection = db_connection()
+    except Exception as exc:
+        return jsonify({"error": "Database connection failed.", "details": str(exc)}), 500
+
     cursor = connection.cursor(dictionary=True)
 
     try:
@@ -165,7 +181,11 @@ def recognize_batch():
             "message": "No faces detected in the submitted image.",
         }), 422
 
-    connection = db_connection()
+    try:
+        connection = db_connection()
+    except Exception as exc:
+        return jsonify({"error": "Database connection failed.", "details": str(exc)}), 500
+
     cursor = connection.cursor(dictionary=True)
 
     try:
@@ -221,4 +241,4 @@ def recognize_batch():
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    app.run(host="0.0.0.0", port=7860, debug=False)

@@ -9,7 +9,7 @@
 return [
     'app_name' => 'FaceTrack Attendance',
     'base_url' => 'http://localhost/face_attendance/index.php',
-    'face_api_url' => 'http://127.0.0.1:5000',
+    'face_api_url' => 'https://xainn-facetrack-api.hf.space',
     'face_match_threshold' => 0.55,
     'timezone' => 'Asia/Karachi',
 
