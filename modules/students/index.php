@@ -353,7 +353,7 @@ $formMode = $editStudent ? 'update' : 'create';
             
             <label>
                 <?= $editStudent ? 'Replace Face Images (optional)' : 'Face Images' ?>
-                <input type="file" name="images[]" accept="image/*" capture="user" multiple <?= $editStudent ? '' : 'required' ?>>
+                <input type="file" name="images[]" accept="image/*" multiple <?= $editStudent ? '' : 'required' ?>>
             </label>
             <p class="muted">
                 <?= $editStudent
