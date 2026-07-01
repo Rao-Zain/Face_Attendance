@@ -788,6 +788,13 @@ $records = $todayAttendance->fetchAll();
                         <span class="bc-badge">${r.message || 'Marked'}</span>
                     </div>`;
                 }).join('');
+            } else {
+                speakAttendance(null, null, 'fail');
+                const cardClass = data.already_marked ? 'already_marked' : 'low_confidence';
+                qrResults.innerHTML = `<div class="batch-card ${cardClass}">
+                    <span class="bc-name">${data.student_name || 'QR Code'}</span>
+                    <span class="bc-badge">${data.message || 'Scan error'}</span>
+                </div>`;
             }
         } catch (err) {
             setQrStatus('QR scan failed: ' + err.message, 'error');

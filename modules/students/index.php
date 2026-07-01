@@ -609,26 +609,57 @@ $formMode = $editStudent ? 'update' : 'create';
     // ── Download QR as PNG ───────────────────────────
     window.downloadQR = function(containerId, rollNo) {
         const container = document.getElementById(containerId);
+        if (!container) return;
         const canvas = container.querySelector('canvas');
-        if (!canvas) { alert('QR code not generated yet.'); return; }
+        const img = container.querySelector('img');
+        let imgData = '';
+        if (canvas && canvas.width > 0) {
+            imgData = canvas.toDataURL('image/png');
+        } else if (img && img.src) {
+            imgData = img.src;
+        }
+
+        if (!imgData) { alert('QR code not generated yet.'); return; }
+
+        let filenameRoll = rollNo;
+        if (!filenameRoll && containerId === 'editQrCode') {
+            filenameRoll = document.querySelector('form input[name="roll_no"]')?.value || 'student';
+        }
 
         const link = document.createElement('a');
-        link.download = 'QR_' + (rollNo || 'student') + '.png';
-        link.href = canvas.toDataURL('image/png');
+        link.download = 'QR_' + (filenameRoll || 'student') + '.png';
+        link.href = imgData;
         link.click();
     };
 
     // ── Print single QR card ─────────────────────────
     window.printSingleCard = function(containerId) {
         const container = document.getElementById(containerId);
+        if (!container) return;
         const canvas = container.querySelector('canvas');
-        if (!canvas) { alert('QR code not generated yet.'); return; }
+        const img = container.querySelector('img');
+        let imgData = '';
+        if (canvas && canvas.width > 0) {
+            imgData = canvas.toDataURL('image/png');
+        } else if (img && img.src) {
+            imgData = img.src;
+        }
 
-        const imgData = canvas.toDataURL('image/png');
-        const name = document.getElementById('qrStudentName')?.textContent ||
-                     <?= json_encode($editStudent['name'] ?? '') ?>;
-        const roll = document.getElementById('qrRollNo')?.textContent ||
-                     <?= json_encode($editStudent['roll_no'] ?? '') ?>;
+        if (!imgData) { alert('QR code not generated yet.'); return; }
+
+        let name = '';
+        let roll = '';
+        let className = '';
+
+        if (containerId === 'modalQrCode') {
+            name = document.getElementById('qrStudentName')?.textContent || '';
+            roll = document.getElementById('qrRollNo')?.textContent || '';
+            className = document.getElementById('qrClassName')?.textContent || '';
+        } else {
+            name = document.querySelector('form input[name="name"]')?.value || <?= json_encode($editStudent['name'] ?? '') ?>;
+            roll = document.querySelector('form input[name="roll_no"]')?.value || <?= json_encode($editStudent['roll_no'] ?? '') ?>;
+            className = document.querySelector('form input[name="class"]')?.value || <?= json_encode($editStudent['class_name'] ?? '') ?>;
+        }
 
         const win = window.open('', '_blank', 'width=450,height=600');
         win.document.write(`<!DOCTYPE html><html><head><title>QR Card — ${roll}</title>
@@ -654,7 +685,7 @@ $formMode = $editStudent ? 'update' : 'create';
             <div class="brand">${APP_NAME}</div>
             <div class="name">${name}</div>
             <div class="roll">${roll}</div>
-            <div class="cls">${document.getElementById('qrClassName')?.textContent || ''}</div>
+            <div class="cls">${className}</div>
             <div class="qr"><img src="${imgData}" width="180" height="180"></div>
             <div class="hint">Scan on Attendance page → QR Code Scanner</div>
         </div>
