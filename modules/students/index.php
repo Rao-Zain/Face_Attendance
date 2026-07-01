@@ -568,6 +568,16 @@ $formMode = $editStudent ? 'update' : 'create';
         'qr_token' => $s['qr_token'],
     ], $students)) ?>;
 
+    // Helper: preload image to ensure cached background images render in print layout
+    function preloadImage() {
+        return new Promise((resolve) => {
+            const img = new Image();
+            img.onload = () => resolve(img);
+            img.onerror = () => resolve(null);
+            img.src = QR_IMAGE_URL;
+        });
+    }
+
     // ── Helper: create a QR code inside a container ──
     async function makeQR(containerId, token, size = 600) {
         const el = document.getElementById(containerId);

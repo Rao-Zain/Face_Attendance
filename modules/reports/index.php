@@ -105,6 +105,251 @@ $summary = [
 ];
 
 $classes = db()->query('SELECT DISTINCT class_name FROM students ORDER BY class_name ASC')->fetchAll();
+
+// Handle Excel/PDF exports
+$action = $_GET['action'] ?? '';
+if ($action === 'export_excel') {
+    header('Content-Type: text/csv; charset=utf-8');
+    header('Content-Disposition: attachment; filename="attendance_report_' . date('Ymd_His') . '.csv"');
+    $output = fopen('php://output', 'w');
+    // Add UTF-8 BOM for Excel compatibility
+    fputs($output, "\xEF\xBB\xBF");
+    fputcsv($output, ['Date', 'Time', 'Student Name', 'Roll No', 'Class', 'Status', 'Marked Via', 'Confidence']);
+    foreach ($rows as $row) {
+        fputcsv($output, [
+            $row['attendance_date'],
+            $row['attendance_time'],
+            $row['name'],
+            $row['roll_no'],
+            $row['class_name'],
+            ucfirst($row['status']),
+            ucfirst($row['marked_via'] ?? 'face'),
+            number_format((float) $row['confidence_score'] * 100, 2) . '%'
+        ]);
+    }
+    fclose($output);
+    exit;
+}
+
+if ($action === 'print_pdf') {
+    $skipLayout = true;
+    ?>
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Attendance Report - <?= e(config('app_name')) ?></title>
+        <style>
+            body {
+                font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+                color: #1e293b;
+                background: #ffffff;
+                margin: 0;
+                padding: 40px;
+                line-height: 1.5;
+            }
+            .header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 2px solid #0f766e;
+                padding-bottom: 20px;
+                margin-bottom: 30px;
+            }
+            .header h1 {
+                margin: 0;
+                color: #0f766e;
+                font-size: 1.85rem;
+                font-weight: 800;
+            }
+            .header-meta {
+                text-align: right;
+                font-size: 0.9rem;
+                color: #64748b;
+            }
+            .report-title {
+                font-size: 1.4rem;
+                font-weight: 700;
+                color: #0f766e;
+                margin-bottom: 20px;
+            }
+            .meta-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 1fr);
+                gap: 20px;
+                margin-bottom: 30px;
+            }
+            .meta-card {
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 8px;
+                padding: 15px;
+            }
+            .meta-label {
+                font-size: 0.75rem;
+                font-weight: 700;
+                color: #64748b;
+                text-transform: uppercase;
+                margin-bottom: 4px;
+            }
+            .meta-value {
+                font-size: 1.25rem;
+                font-weight: 800;
+                color: #0f766e;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin-top: 20px;
+            }
+            th {
+                background-color: #f8fafc;
+                border-bottom: 2px solid #cbd5e1;
+                color: #475569;
+                font-weight: 700;
+                font-size: 0.8rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+                padding: 12px 14px;
+                text-align: left;
+            }
+            td {
+                padding: 12px 14px;
+                border-bottom: 1px solid #e2e8f0;
+                font-size: 0.875rem;
+            }
+            tr {
+                page-break-inside: avoid;
+            }
+            .badge {
+                display: inline-block;
+                padding: 2px 8px;
+                border-radius: 9999px;
+                font-size: 0.75rem;
+                font-weight: 700;
+                background-color: #f1f5f9;
+                color: #475569;
+                border: 1px solid #e2e8f0;
+            }
+            .badge-success { background-color: #ecfdf5; color: #047857; border-color: #a7f3d0; }
+            .badge-warning { background-color: #fffbef; color: #b45309; border-color: #fde68a; }
+            .no-print-bar {
+                background: #f1f5f9;
+                padding: 12px 40px;
+                margin: -40px -40px 40px -40px;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                border-bottom: 1px solid #cbd5e1;
+            }
+            @media print {
+                .no-print-bar {
+                    display: none;
+                }
+                body {
+                    padding: 0;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="no-print-bar">
+            <span>📄 Report Ready for Printing / PDF Export</span>
+            <div style="display: flex; gap: 8px;">
+                <button onclick="window.print()" style="background:#0f766e; color:#fff; border:none; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer;">Print / Save as PDF</button>
+                <button onclick="window.close()" style="background:#fff; border:1px solid #cbd5e1; padding:8px 16px; border-radius:6px; font-weight:600; cursor:pointer;">Close</button>
+            </div>
+        </div>
+        <div class="header">
+            <div>
+                <h1><?= e(config('app_name')) ?></h1>
+                <div style="font-size:0.9rem; color:#64748b; margin-top:4px;">Automated Attendance System</div>
+            </div>
+            <div class="header-meta">
+                <div>Generated: <?= date('d M Y, h:i A') ?></div>
+                <div>Teacher Report</div>
+            </div>
+        </div>
+        
+        <div class="report-title">
+            Attendance Report
+            <span style="font-size:1rem; font-weight:400; color:#64748b; margin-left:10px;">
+                (<?= e($dateFrom) ?> to <?= e($dateTo) ?>)
+            </span>
+        </div>
+
+        <div class="meta-grid">
+            <div class="meta-card">
+                <div class="meta-label">Selected Class</div>
+                <div class="meta-value"><?= $classFilter !== '' ? e($classFilter) : 'All Classes' ?></div>
+            </div>
+            <div class="meta-card">
+                <div class="meta-label">Total Attendance Marks</div>
+                <div class="meta-value"><?= e((string) $summary['total_marks']) ?></div>
+            </div>
+            <div class="meta-card">
+                <div class="meta-label">Unique Students</div>
+                <div class="meta-value"><?= e((string) $summary['unique_students']) ?></div>
+            </div>
+            <div class="meta-card">
+                <div class="meta-label">Avg. Confidence</div>
+                <div class="meta-value"><?= e(number_format($summary['avg_confidence'] * 100, 2)) ?>%</div>
+            </div>
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Student Name</th>
+                    <th>Roll No</th>
+                    <th>Class</th>
+                    <th>Status</th>
+                    <th>Method</th>
+                    <th>Confidence</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php if ($rows === []): ?>
+                    <tr><td colspan="8" style="text-align:center; color:#64748b;">No records match the selected filters.</td></tr>
+                <?php else: ?>
+                    <?php foreach ($rows as $row): ?>
+                        <tr>
+                            <td><?= e($row['attendance_date']) ?></td>
+                            <td><?= e($row['attendance_time']) ?></td>
+                            <td><strong><?= e($row['name']) ?></strong></td>
+                            <td><?= e($row['roll_no']) ?></td>
+                            <td><?= e($row['class_name']) ?></td>
+                            <td>
+                                <?php if ($row['status'] === 'present'): ?>
+                                    <span class="badge badge-success">Present</span>
+                                <?php else: ?>
+                                    <span class="badge badge-warning">Late</span>
+                                <?php endif; ?>
+                            </td>
+                            <td><span class="badge"><?= e(ucfirst($row['marked_via'] ?? 'face')) ?></span></td>
+                            <td><?= e(number_format((float) $row['confidence_score'] * 100, 2)) ?>%</td>
+                        </tr>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </tbody>
+        </table>
+
+        <script>
+            window.onload = function() {
+                setTimeout(function() {
+                    window.print();
+                }, 300);
+            };
+        </script>
+    </body>
+    </html>
+    <?php
+    exit;
+}
+
+$classes = db()->query('SELECT DISTINCT class_name FROM students ORDER BY class_name ASC')->fetchAll();
 ?>
 <div class="grid cols-2">
     <section class="card">
@@ -196,7 +441,17 @@ $classes = db()->query('SELECT DISTINCT class_name FROM students ORDER BY class_
 </div>
 
 <section class="card" style="margin-top: 18px;">
-    <h2>Filtered Attendance Records</h2>
+    <div style="display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+        <h2 style="margin: 0;">Filtered Attendance Records</h2>
+        <div style="display: flex; gap: 8px;">
+            <a class="btn secondary-btn" style="text-decoration: none;" href="index.php?page=reports&action=export_excel&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>&class=<?= urlencode($classFilter) ?>">
+                📊 Export to Excel
+            </a>
+            <a class="btn secondary-btn" style="text-decoration: none;" href="index.php?page=reports&action=print_pdf&date_from=<?= urlencode($dateFrom) ?>&date_to=<?= urlencode($dateTo) ?>&class=<?= urlencode($classFilter) ?>" target="_blank">
+                📄 Export to PDF
+            </a>
+        </div>
+    </div>
     <div class="table-responsive">
         <table>
             <thead>
