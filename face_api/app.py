@@ -28,17 +28,77 @@ def db_connection():
     )
 
 
+import time
+
+KNOWN_ENCODINGS = None
+LAST_CACHE_TIME = 0
+CACHE_TTL = 60
+CACHE_DIRTY = True
+
+def load_cache(force=False):
+    global KNOWN_ENCODINGS, LAST_CACHE_TIME, CACHE_DIRTY
+    now = time.time()
+    if force or KNOWN_ENCODINGS is None or CACHE_DIRTY or (now - LAST_CACHE_TIME) > CACHE_TTL:
+        try:
+            connection = db_connection()
+            cursor = connection.cursor(dictionary=True)
+            cursor.execute(
+                """
+                SELECT fe.student_id, fe.encoding, s.name, s.roll_no
+                FROM face_encodings fe
+                INNER JOIN students s ON s.id = fe.student_id
+                """
+            )
+            rows = cursor.fetchall()
+            cursor.close()
+            connection.close()
+
+            parsed_rows = []
+            for row in rows:
+                try:
+                    parsed_rows.append({
+                        "student_id": row["student_id"],
+                        "student_name": row["name"],
+                        "name": row["name"],
+                        "roll_no": row.get("roll_no", ""),
+                        "encoding": json_to_encoding(row["encoding"])
+                    })
+                except Exception:
+                    pass
+
+            KNOWN_ENCODINGS = parsed_rows
+            LAST_CACHE_TIME = now
+            CACHE_DIRTY = False
+        except Exception as e:
+            if KNOWN_ENCODINGS is not None:
+                print("Cache reload failed, using stale cache:", e)
+            else:
+                raise e
+
+
 @app.get("/")
 def index():
     return jsonify({
         "message": "FaceTrack Attendance API is running",
-        "endpoints": ["/health", "/register", "/recognize", "/recognize_batch"]
+        "endpoints": ["/health", "/register", "/recognize", "/recognize_batch", "/reload_cache"]
     })
 
 
 @app.get("/health")
 def health():
     return jsonify({"status": "ok"})
+
+
+@app.post("/reload_cache")
+def reload_cache():
+    global CACHE_DIRTY
+    CACHE_DIRTY = True
+    try:
+        load_cache(force=True)
+        count = len(KNOWN_ENCODINGS) if KNOWN_ENCODINGS else 0
+        return jsonify({"status": "ok", "message": "Cache reloaded successfully", "count": count})
+    except Exception as exc:
+        return jsonify({"error": "Failed to reload cache", "details": str(exc)}), 500
 
 
 @app.post("/register")
@@ -84,6 +144,9 @@ def register_face():
         cursor.close()
         connection.close()
 
+    global CACHE_DIRTY
+    CACHE_DIRTY = True
+
     return jsonify({
         "student_id": student_id,
         "encodings_saved": len(saved_encodings),
@@ -115,38 +178,23 @@ def recognize_face():
     candidate = candidate_encodings[0]
 
     try:
-        connection = db_connection()
+        load_cache()
     except Exception as exc:
-        return jsonify({"error": "Database connection failed.", "details": str(exc)}), 500
+        return jsonify({"error": "Database cache reload failed.", "details": str(exc)}), 500
 
-    cursor = connection.cursor(dictionary=True)
-
-    try:
-        cursor.execute(
-            """
-            SELECT fe.student_id, fe.encoding, s.name
-            FROM face_encodings fe
-            INNER JOIN students s ON s.id = fe.student_id
-            """
-        )
-        rows = cursor.fetchall()
-    finally:
-        cursor.close()
-        connection.close()
-
-    if not rows:
+    if not KNOWN_ENCODINGS:
         return jsonify({
             "matched": False,
             "message": "No face encodings are registered yet.",
         }), 404
 
-    known_encodings = [json_to_encoding(row["encoding"]) for row in rows]
+    known_encodings = [row["encoding"] for row in KNOWN_ENCODINGS]
     best_index, confidence = best_face_match(known_encodings, candidate)
 
     if best_index is None:
         return jsonify({"matched": False, "message": "No matching face found."})
 
-    matched_row = rows[best_index]
+    matched_row = KNOWN_ENCODINGS[best_index]
 
     if confidence < FACE_MATCH_THRESHOLD:
         return jsonify({
@@ -182,33 +230,18 @@ def recognize_batch():
         }), 422
 
     try:
-        connection = db_connection()
+        load_cache()
     except Exception as exc:
-        return jsonify({"error": "Database connection failed.", "details": str(exc)}), 500
+        return jsonify({"error": "Database cache reload failed.", "details": str(exc)}), 500
 
-    cursor = connection.cursor(dictionary=True)
-
-    try:
-        cursor.execute(
-            """
-            SELECT fe.student_id, fe.encoding, s.name, s.roll_no
-            FROM face_encodings fe
-            INNER JOIN students s ON s.id = fe.student_id
-            """
-        )
-        rows = cursor.fetchall()
-    finally:
-        cursor.close()
-        connection.close()
-
-    if not rows:
+    if not KNOWN_ENCODINGS:
         return jsonify({
             "matches": [],
             "faces_detected": len(candidate_encodings),
             "message": "No face encodings are registered yet.",
         }), 404
 
-    known_encodings = [json_to_encoding(row["encoding"]) for row in rows]
+    known_encodings = [row["encoding"] for row in KNOWN_ENCODINGS]
     matches = []
     matched_student_ids = set()
 
@@ -218,7 +251,7 @@ def recognize_batch():
         if best_index is None or confidence < FACE_MATCH_THRESHOLD:
             continue
 
-        matched_row = rows[best_index]
+        matched_row = KNOWN_ENCODINGS[best_index]
         student_id = matched_row["student_id"]
 
         # Skip if this student was already matched by another face crop
@@ -228,7 +261,7 @@ def recognize_batch():
         matched_student_ids.add(student_id)
         matches.append({
             "student_id": student_id,
-            "student_name": matched_row["name"],
+            "student_name": matched_row["student_name"],
             "roll_no": matched_row.get("roll_no", ""),
             "confidence": confidence,
         })

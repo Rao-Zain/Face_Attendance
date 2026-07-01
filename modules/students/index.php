@@ -60,6 +60,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = db()->prepare('DELETE FROM students WHERE id = :id');
             $stmt->execute(['id' => $studentId]);
 
+            // Reload Face API cache
+            try {
+                face_api_request('/reload_cache');
+            } catch (Throwable $e) {
+                error_log('Failed to reload Face API cache on student delete: ' . $e->getMessage());
+            }
+
             flash('success', 'Student deleted successfully.');
             redirect($redirectTarget);
         }
@@ -267,6 +274,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($files !== []) {
                 $saved = replace_student_encodings($studentId, $name, $files);
                 $message .= sprintf(' Face encodings replaced with %d fresh sample(s).', $saved);
+            } else {
+                // Reload Face API cache to pick up updated name/roll_no
+                try {
+                    face_api_request('/reload_cache');
+                } catch (Throwable $e) {
+                    error_log('Failed to reload Face API cache on student update: ' . $e->getMessage());
+                }
             }
 
             flash('success', $message);
@@ -546,52 +560,6 @@ $formMode = $editStudent ? 'update' : 'create';
     const APP_NAME = <?= json_encode(config('app_name')) ?>;
     const QR_IMAGE_URL = 'public/assets/logo.jpeg';
 
-    // Preload image for canvas operations
-    let bgImg = null;
-    function preloadImage() {
-        if (bgImg) return Promise.resolve(bgImg);
-        return new Promise((resolve) => {
-            const img = new Image();
-            img.onload = () => { bgImg = img; resolve(img); };
-            img.onerror = () => { bgImg = null; resolve(null); };
-            img.src = QR_IMAGE_URL;
-        });
-    }
-
-    async function applyBranding(canvas) {
-        const image = await preloadImage();
-        if (!image) return;
-
-        const ctx = canvas.getContext('2d');
-        const size = canvas.width;
-
-        // 1. Create a temporary canvas for the QR code
-        const tempCanvas = document.createElement('canvas');
-        tempCanvas.width = size;
-        tempCanvas.height = size;
-        const tempCtx = tempCanvas.getContext('2d');
-        tempCtx.drawImage(canvas, 0, 0);
-
-        // 2. Clear main canvas to draw background
-        ctx.clearRect(0, 0, size, size);
-
-        // 3. Draw Background Image (Cover/Fill)
-        ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = 'high';
-        const scale = Math.max(size / image.width, size / image.height);
-        const x = (size / 2) - (image.width / 2) * scale;
-        const y = (size / 2) - (image.height / 2) * scale;
-        ctx.drawImage(image, x, y, image.width * scale, image.height * scale);
-
-        // 4. Draw a "High-Contrast White Wash"
-        // 60% opacity provides the perfect balance for scanning
-        ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
-        ctx.fillRect(0, 0, size, size);
-
-        // 5. Draw the QR code on top (Normal blend for sharpest modules)
-        ctx.drawImage(tempCanvas, 0, 0);
-    }
-
     // All student data for bulk card generation
     const allStudents = <?= json_encode(array_map(static fn($s) => [
         'name' => $s['name'],
@@ -609,16 +577,10 @@ $formMode = $editStudent ? 'update' : 'create';
             text: 'FACETRACK:' + token,
             width: size,
             height: size,
-            colorDark: '#0f172a',
+            colorDark: '#000000',
             colorLight: '#ffffff',
-            correctLevel: QRCode.CorrectLevel.H,
+            correctLevel: QRCode.CorrectLevel.M,
         });
-
-        // Wait for render, then apply background
-        setTimeout(async () => {
-            const canvas = el.querySelector('canvas');
-            if (canvas) await applyBranding(canvas);
-        }, 80);
     }
 
     // ── Generate edit-page QR on load ────────────────
@@ -771,7 +733,7 @@ $formMode = $editStudent ? 'update' : 'create';
                     text: 'FACETRACK:' + s.qr_token,
                     width: 600,
                     height: 600,
-                    correctLevel: QRCode.CorrectLevel.H
+                    correctLevel: QRCode.CorrectLevel.M
                 });
 
                 // Wait a tiny bit for the library to render the canvas
@@ -779,7 +741,6 @@ $formMode = $editStudent ? 'update' : 'create';
 
                 const canvas = div.querySelector('canvas');
                 if (canvas) {
-                    await applyBranding(canvas); // Add background before zipping
                     const dataUrl = canvas.toDataURL('image/png', 1.0);
                     const base64Data = dataUrl.split(',')[1];
                     const fileName = `${s.roll_no.replace(/[^a-z0-9]/gi, '_')}_${s.name.replace(/[^a-z0-9]/gi, '_')}.png`;

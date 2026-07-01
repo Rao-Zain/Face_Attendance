@@ -285,6 +285,12 @@ $records = $todayAttendance->fetchAll();
                 <div id="cameraStatus" class="camera-status">
                     Start the webcam, then use auto-scan or capture manually. Multiple students can be recognized in a single frame.
                 </div>
+                <div class="camera-controls-row" style="margin-bottom: 12px; display: flex; gap: 10px; align-items: center; width: 100%;">
+                    <label for="faceCameraSelect" style="font-weight: 600; white-space: nowrap;">Select Camera:</label>
+                    <select id="faceCameraSelect" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--text); flex-grow: 1; min-width: 0; outline: none; font-size: 0.9rem;">
+                        <option value="">Detecting cameras...</option>
+                    </select>
+                </div>
                 <div class="camera-actions">
                     <button type="button" id="startCameraBtn">Start Camera</button>
                     <button type="button" id="stopCameraBtn" class="secondary-btn">Stop Camera</button>
@@ -311,6 +317,12 @@ $records = $todayAttendance->fetchAll();
     <section class="card">
         <h2>QR Code Attendance</h2>
         <p class="muted">When face recognition is unavailable (low light, masks, etc.), students can scan their personal QR code to mark attendance.</p>
+        <div class="camera-controls-row" style="margin-bottom: 15px; display: flex; gap: 10px; align-items: center; max-width: 400px; width: 100%;">
+            <label for="qrCameraSelect" style="font-weight: 600; white-space: nowrap;">Select Camera:</label>
+            <select id="qrCameraSelect" style="padding: 6px 12px; border-radius: 6px; border: 1px solid var(--line); background: var(--bg); color: var(--text); flex-grow: 1; min-width: 0; outline: none; font-size: 0.9rem;">
+                <option value="">Detecting cameras...</option>
+            </select>
+        </div>
         <div class="qr-scanner-wrapper">
             <div id="qr-reader"></div>
         </div>
@@ -484,17 +496,112 @@ $records = $todayAttendance->fetchAll();
         window.speechSynthesis.speak(utterance);
     }
 
+    let videoDevices = [];
+
+    async function populateCameraSelects(requestPermission = false) {
+        const faceSelect = document.getElementById('faceCameraSelect');
+        const qrSelect = document.getElementById('qrCameraSelect');
+        if (!faceSelect || !qrSelect) return;
+
+        try {
+            if (requestPermission) {
+                const tempStream = await navigator.mediaDevices.getUserMedia({ video: true }).catch(() => null);
+                if (tempStream) {
+                    tempStream.getTracks().forEach(t => t.stop());
+                }
+            }
+
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            videoDevices = devices.filter(device => device.kind === 'videoinput');
+
+            // Save previous selection values
+            const prevFaceVal = faceSelect.value;
+            const prevQrVal = qrSelect.value;
+
+            [faceSelect, qrSelect].forEach(select => {
+                select.innerHTML = '';
+                if (videoDevices.length === 0) {
+                    const opt = document.createElement('option');
+                    opt.value = '';
+                    opt.textContent = 'No cameras found';
+                    select.appendChild(opt);
+                    return;
+                }
+
+                let defaultIndex = 0;
+                videoDevices.forEach((device, index) => {
+                    const opt = document.createElement('option');
+                    opt.value = device.deviceId;
+                    opt.textContent = device.label || `Camera ${index + 1} (${device.deviceId.slice(0, 5)})`;
+                    select.appendChild(opt);
+
+                    const labelLower = (device.label || '').toLowerCase();
+                    if (select === qrSelect) {
+                        // Prefer back camera for QR scanner
+                        if (labelLower.includes('back') || labelLower.includes('environment') || labelLower.includes('rear')) {
+                            defaultIndex = index;
+                        }
+                    } else if (select === faceSelect) {
+                        // Prefer front camera for Face recognition
+                        if (labelLower.includes('front') || labelLower.includes('user') || labelLower.includes('selfie')) {
+                            defaultIndex = index;
+                        }
+                    }
+                });
+
+                if (prevFaceVal && select === faceSelect && Array.from(select.options).some(o => o.value === prevFaceVal)) {
+                    select.value = prevFaceVal;
+                } else if (prevQrVal && select === qrSelect && Array.from(select.options).some(o => o.value === prevQrVal)) {
+                    select.value = prevQrVal;
+                } else {
+                    select.selectedIndex = defaultIndex;
+                }
+            });
+        } catch (err) {
+            console.error('Error enumerating cameras:', err);
+        }
+    }
+
     async function startCamera() {
         if (stream) return true;
+        
+        await populateCameraSelects(true);
+        const faceSelect = document.getElementById('faceCameraSelect');
+        const selectedDeviceId = faceSelect ? faceSelect.value : null;
+
+        const constraints = {
+            video: {
+                width: { ideal: 640 },
+                height: { ideal: 480 }
+            },
+            audio: false
+        };
+
+        if (selectedDeviceId) {
+            constraints.video.deviceId = { exact: selectedDeviceId };
+        } else {
+            constraints.video.facingMode = 'user';
+        }
+
         try {
-            stream = await navigator.mediaDevices.getUserMedia({
-                video: { facingMode: 'user', width: { ideal: 640 }, height: { ideal: 480 } },
-                audio: false
-            });
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = stream;
             setStatus('Camera is live. Position students inside the frame.', 'success');
             return true;
         } catch (err) {
+            if (selectedDeviceId) {
+                delete constraints.video.deviceId;
+                constraints.video.facingMode = 'user';
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    video.srcObject = stream;
+                    setStatus('Camera is live (fallback used).', 'success');
+                    return true;
+                } catch (e2) {
+                    setStatus(`Camera access failed: ${e2.message}`, 'error');
+                    return false;
+                }
+            }
             setStatus(`Camera access failed: ${err.message}`, 'error');
             return false;
         }
@@ -612,32 +719,38 @@ $records = $todayAttendance->fetchAll();
         }
     }
 
-    function initQrScanner() {
+    async function initQrScanner() {
         if (typeof Html5Qrcode === 'undefined') {
             setQrStatus('QR scanner library failed to load. Check your internet connection.', 'error');
             return;
         }
         if (qrScanner) return;
 
+        await populateCameraSelects(true);
+        const qrSelect = document.getElementById('qrCameraSelect');
+        const selectedDeviceId = qrSelect ? qrSelect.value : null;
+
         qrScanner = new Html5Qrcode('qr-reader');
-        qrScanner.start(
-            { facingMode: "user" }, // Use "user" as default for laptops, works on phones too
-            {
-                fps: 16,
-                qrbox: (viewWidth, viewHeight) => {
-                    const minEdge = Math.min(viewWidth, viewHeight);
-                    const size = Math.floor(minEdge * 0.6);
-                    return { width: size, height: size };
-                }
+        
+        const scanConfig = {
+            fps: 24, // increased fps for faster scanning
+            qrbox: (viewWidth, viewHeight) => {
+                const minEdge = Math.min(viewWidth, viewHeight);
+                const size = Math.floor(minEdge * 0.7); // slightly larger box
+                return { width: size, height: size };
             },
-            onQrDetected,
-            () => {}
-        ).then(() => {
+            aspectRatio: 1.0
+        };
+
+        const startPromise = selectedDeviceId 
+            ? qrScanner.start(selectedDeviceId, scanConfig, onQrDetected, () => {})
+            : qrScanner.start({ facingMode: "environment" }, scanConfig, onQrDetected, () => {})
+                .catch(() => qrScanner.start({ facingMode: "user" }, scanConfig, onQrDetected, () => {}));
+
+        startPromise.then(() => {
             setQrStatus('QR scanner active. Hold a student QR code in front of the camera.', 'success');
         }).catch(err => {
-            // If "user" failed, try without constraints
-            qrScanner.start({ facingMode: "environment" }, { fps: 10, qrbox: 250 }, onQrDetected, () => {})
-                .catch(e => setQrStatus('Cannot start QR scanner: ' + e, 'error'));
+            setQrStatus('Cannot start QR scanner: ' + err, 'error');
         });
     }
 
@@ -681,6 +794,24 @@ $records = $todayAttendance->fetchAll();
         }
         setTimeout(() => { qrCooldown = false; }, 2500);
     }
+
+    // Camera selection change listeners
+    document.getElementById('faceCameraSelect')?.addEventListener('change', () => {
+        if (stream) {
+            stopCamera();
+            startCamera();
+        }
+    });
+
+    document.getElementById('qrCameraSelect')?.addEventListener('change', async () => {
+        if (qrScanner && qrScanner.isScanning) {
+            await stopQrScanner();
+            initQrScanner();
+        }
+    });
+
+    // Populate cameras list on page load (silent)
+    populateCameraSelects(false).catch(err => console.warn('Initial camera list detection failed:', err));
 
 })();
 </script>

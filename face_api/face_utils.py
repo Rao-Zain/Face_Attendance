@@ -6,8 +6,20 @@ import face_recognition
 import numpy as np
 
 
+import cv2
+
 def extract_face_encodings(image_bytes: bytes) -> List[np.ndarray]:
     image = face_recognition.load_image_file(io.BytesIO(image_bytes))
+    
+    # Resize image if too large to speed up CPU face detection & encoding
+    h, w = image.shape[:2]
+    max_dim = 640
+    if max(h, w) > max_dim:
+        scale = max_dim / max(h, w)
+        new_w = int(w * scale)
+        new_h = int(h * scale)
+        image = cv2.resize(image, (new_w, new_h), interpolation=cv2.INTER_AREA)
+
     locations = face_recognition.face_locations(image, model="hog")
 
     if not locations:
