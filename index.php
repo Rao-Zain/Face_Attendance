@@ -15,6 +15,7 @@ $routes = [
     'attendance' => __DIR__ . '/modules/attendance/index.php',
     'reports' => __DIR__ . '/modules/reports/index.php',
     'notifications' => __DIR__ . '/modules/notifications/index.php',
+    'admin' => __DIR__ . '/modules/admin.php',
 ];
 
 if (!isset($routes[$page])) {

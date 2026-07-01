@@ -151,13 +151,19 @@ function now_time(): string
 
 function nav_items(): array
 {
-    return [
+    $items = [
         'dashboard' => 'Dashboard',
         'students' => 'Students',
         'attendance' => 'Attendance',
         'reports' => 'Reports',
         'notifications' => 'Notifications',
     ];
+
+    if ((current_user()['role'] ?? '') === 'admin') {
+        $items['admin'] = 'Admin Access';
+    }
+
+    return $items;
 }
 
 function face_api_request(string $endpoint, array $payload = [], array $files = []): array
